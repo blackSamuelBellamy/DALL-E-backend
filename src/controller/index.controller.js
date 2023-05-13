@@ -1,9 +1,9 @@
-const openai = require('../helpers/openai')
+const pic = require('../helpers/openai')
 const { creatingPost, readingPost } = require('../services/indexServices')
 const cloudinary = require('../helpers/cloudinary')
 
 const indexController = {
-    home: async (req, res) => {
+    home: async (_, res) => {
         try {
             res.status(200).send('DALL-E Online')
         } catch (err) {
@@ -13,17 +13,14 @@ const indexController = {
     postPrompt: async (req, res) => {
         try {
             const { prompt } = req.body
-            const airesponse = await openai.createImage({
-                prompt,
-                n: 1,
-                size: '1024x1024',
-                response_format: 'b64_json'
-            })
-            const image = airesponse.data.data[0].b64_json
+            const image = await pic(prompt)
             res.status(200).json({ photo: image })
 
         } catch (err) {
-            res.status(500).send(err)
+            const error = err.response.data.error.message
+            if(error === 'Billing hard limit has been reached')
+            res.status(500).send("Se ha alcanzado el límite gratuito de pruebas")
+            else res.status(500).send(err)
         }
     },
     storingPost: async (req, res) => {
